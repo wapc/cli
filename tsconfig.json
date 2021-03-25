@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "esnext",
+    "baseUrl": "./modules",
+    "lib": [      
+      "esnext"
+    ],
+    "outDir": "src"
+  }
+}
