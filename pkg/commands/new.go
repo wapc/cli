@@ -33,6 +33,12 @@ type NewCmd struct {
 	Variables map[string]string `arg:"" help:"Variables to pass to the template." optional:""`
 }
 
+var firstPartyTranslations = map[string]string{
+	"assemblyscript": filepath.Join("@wapc", "widl-codegen", "assemblyscript"),
+	"rust":           filepath.Join("@wapc", "widl-codegen", "rust"),
+	"tinygo":         filepath.Join("@wapc", "widl-codegen", "tinygo"),
+}
+
 func (c *NewCmd) Run(ctx *Context) error {
 	if strings.Contains(c.Template, "..") {
 		return fmt.Errorf("invalid template %s", c.Template)
@@ -41,6 +47,10 @@ func (c *NewCmd) Run(ctx *Context) error {
 	homeDir, err := getHomeDirectory()
 	if err != nil {
 		return err
+	}
+
+	if translation, exists := firstPartyTranslations[c.Template]; exists {
+		c.Template = translation
 	}
 
 	templatePath := filepath.Join(homeDir, "templates", c.Template)
