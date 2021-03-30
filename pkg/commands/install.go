@@ -113,15 +113,18 @@ func (c *InstallCmd) doRun(ctx *Context, homeDir string) error {
 		return err
 	}
 
-	modulePart := release.Module
-	if release.Org != "" {
-		modulePart = filepath.Join(release.Org, release.Module)
-	}
-
 	for _, entry := range dirEntries {
 		if entry.IsDir() {
+			contentsDir := filepath.Join(downloadDir, entry.Name())
+			readPackage(contentsDir, release)
+
+			modulePart := release.Module
+			if release.Org != "" {
+				modulePart = filepath.Join(release.Org, release.Module)
+			}
+
 			if err = c.installDir(
-				filepath.Join(downloadDir, entry.Name()),
+				contentsDir,
 				homeDir,
 				modulePart,
 			); err != nil {
@@ -216,6 +219,20 @@ func (c *InstallCmd) getReleaseInfoFromGithub(location, releaseTag string) (*rel
 		var err error
 		release, _, err = client.Repositories.GetReleaseByTag(ct, org, repo, c.Release)
 		if err != nil {
+			if ghe, ok := err.(*github.ErrorResponse); ok && ghe.Response.StatusCode == 404 {
+				branch, _, err := client.Repositories.GetBranch(ct, org, repo, c.Release)
+				if err != nil {
+					return nil, err
+				}
+
+				// Return download URL for a branch
+				return &releaseInfo{
+					Org:    org,
+					Module: repo,
+					Tag:    c.Release,
+					ZipURL: fmt.Sprintf("https://github.com/%s/%s/archive/refs/heads/%s.zip", org, repo, *branch.Name),
+				}, nil
+			}
 			return nil, err
 		}
 	}
@@ -443,4 +460,39 @@ func (c *InstallCmd) createHTTPClient() {
 		Timeout:   time.Second * 10,
 		Transport: netTransport,
 	}
+}
+
+func readPackage(dir string, release *releaseInfo) error {
+	packageJSONPath := filepath.Join(dir, "package.json")
+	packageJSONBytes, err := os.ReadFile(packageJSONPath)
+	if err != nil {
+		return err
+	}
+
+	type packageJSON struct {
+		Name string `json:"name"`
+	}
+
+	var contents packageJSON
+	if err = json.Unmarshal(packageJSONBytes, &contents); err != nil {
+		return err
+	}
+
+	if contents.Name == "" {
+		return nil
+	}
+
+	parts := strings.Split(contents.Name, "/")
+	if len(parts) > 2 {
+		return nil
+	}
+
+	release.Org = parts[0]
+	if len(parts) == 2 {
+		release.Module = parts[1]
+	} else {
+		release.Module = ""
+	}
+
+	return nil
 }
