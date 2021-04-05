@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -63,7 +65,7 @@ func (c *GenerateCmd) Run(ctx *Context) error {
 		}
 	}()
 
-	configBytes, err := os.ReadFile(c.Config)
+	configBytes, err := readFile(c.Config)
 	if err != nil {
 		return err
 	}
@@ -84,7 +86,7 @@ func (c *GenerateCmd) generate(configYAML string) error {
 		return err
 	}
 
-	schemaBytes, err := os.ReadFile(config.Schema)
+	schemaBytes, err := readFile(config.Schema)
 	if err != nil {
 		return err
 	}
@@ -219,4 +221,18 @@ func formatGolang(filename string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func readFile(file string) ([]byte, error) {
+	if strings.HasPrefix(file, "http://") || strings.HasPrefix(file, "https://") {
+		resp, err := http.Get(file)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		return io.ReadAll(resp.Body)
+	}
+
+	return os.ReadFile(file)
 }
