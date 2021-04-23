@@ -19,6 +19,17 @@ var baseDependencies = map[string][]string{
 }
 
 func getHomeDirectory() (string, error) {
+	wapcHome, err := ensureHomeDirectory()
+	if err != nil {
+		return "", err
+	}
+
+	err = checkDependencies(wapcHome, false)
+
+	return wapcHome, err
+}
+
+func ensureHomeDirectory() (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
 		return "", err
@@ -44,10 +55,16 @@ func getHomeDirectory() (string, error) {
 		}
 	}
 
+	return wapcHome, nil
+}
+
+func checkDependencies(wapcHome string, forceDownload bool) error {
 	missing := make(map[string]struct{}, len(baseDependencies))
 	for dependency, checks := range baseDependencies {
 		for _, check := range checks {
-			if _, err := os.Stat(filepath.Join(wapcHome, check)); os.IsNotExist(err) {
+			if forceDownload {
+				missing[dependency] = struct{}{}
+			} else if _, err := os.Stat(filepath.Join(wapcHome, check)); os.IsNotExist(err) {
 				missing[dependency] = struct{}{}
 			}
 		}
@@ -59,11 +76,11 @@ func getHomeDirectory() (string, error) {
 			cmd := InstallCmd{
 				Location: dependency,
 			}
-			if err = cmd.doRun(&Context{}, wapcHome); err != nil {
-				return "", err
+			if err := cmd.doRun(&Context{}, wapcHome); err != nil {
+				return err
 			}
 		}
 	}
 
-	return wapcHome, nil
+	return nil
 }
