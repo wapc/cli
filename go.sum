@@ -54,5 +54,5 @@ gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EV
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b h1:h8qDotaEPuJATrMmW04NCwg7v22aHH28wwpauUhK9Oo=
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
-rogchap.com/v8go v0.5.1 h1:yx7uQC2ezAHthCHLHl4NuH3eprVLBtNl6Utm/ELjZ+w=
-rogchap.com/v8go v0.5.1/go.mod h1:IitZnaOtWSJadY/7qinKHIEHpxsilMWyLQ+Efdo4n4I=
+rogchap.com/v8go v0.5.2-0.20210423120543-491864424893 h1:4yu8bXxoh1FkLSp21WRMieH+0xmlkFAczeEUibvQZFQ=
+rogchap.com/v8go v0.5.2-0.20210423120543-491864424893/go.mod h1:IitZnaOtWSJadY/7qinKHIEHpxsilMWyLQ+Efdo4n4I=
