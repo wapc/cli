@@ -34,7 +34,7 @@ These instructions will get you a copy of the project up and running on your loc
 Install the CLI
 
 ```shell
-go install github.com/wapc/cli-go/cmd/...
+go install github.com/wapc/cli-go/cmd/...@latest
 ```
 
 AssemblyScript
@@ -86,12 +86,19 @@ go version
 Install the project from github
 
 ```shell
-go install github.com/wapc/cli-go/cmd/...
+go install github.com/wapc/cli-go/cmd/...@latest
 ```
 
 **Installing on Windows**
 
-This CLI uses the [github.com/rogchap/v8go](https://github.com/rogchap/v8go) library to embed the [V8 JavaScript engine](https://v8.dev/). Currently, this library does not have prebuilt Windows static libraries for V8. For the time being, [these instructions](https://github.com/rogchap/v8go/blob/master/README.md#windows) must be followed. We are looking into how to remove this step by possibly helping to add the Windows libraries (which would be ideal), packaging up the necessary V8 DLLs with this CLI, or providing a Docker container and script to wrap the CLI.
+In order to build a project using v8go on Windows, Go requires a gcc compiler to be installed.
+
+To set this up:
+1. Install MSYS2 (https://www.msys2.org/)
+2. Add the Mingw-w64 bin to your PATH environment variable (`C:\msys64\mingw64\bin` by default)
+3. Open MSYS2 MSYS and execute `pacman -S mingw-w64-x86_64-toolchain`
+
+V8 requires 64-bit on Windows, therefore it will not work on 32-bit systems. 
 
 Confirm `wapc` runs (The Go installation should add `~/go/bin` in your `PATH`)
 
