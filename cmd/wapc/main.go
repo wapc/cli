@@ -13,6 +13,8 @@ var cli struct {
 	Generate commands.GenerateCmd `cmd:"" help:"Generate code from a configuration file."`
 	// New creates a new project from a template.
 	New commands.NewCmd `cmd:"" help:"Creates a new project from a template."`
+	// Upgrade reinstalls the base module dependencies.
+	Upgrade commands.UpgradeCmd `cmd:"" help:"Upgrades to the latest base modules dependencies."`
 }
 
 func main() {
