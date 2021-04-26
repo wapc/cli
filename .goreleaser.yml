@@ -1,0 +1,118 @@
+project_name: wapc
+builds:
+  - id: darwin-amd64
+    main: ./cmd/wapc
+    binary: wapc
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    env:
+      - CC=o64-clang
+      - CXX=o64-clang++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+  # - id: darwin-arm64
+  #   main: ./cmd/wapc
+  #   binary: wapc
+  #   goos:
+  #     - darwin
+  #   goarch:
+  #     - arm64
+  #   env:
+  #     - CC=oa64-clang
+  #     - CXX=oa64-clang++
+  #   flags:
+  #     - -mod=readonly
+  #   ldflags:
+  #     - -s -w -X main.version={{.Version}}
+  - id: windows-amd64
+    main: ./cmd/wapc
+    binary: wapc
+    goos:
+      - windows
+    goarch:
+      - amd64
+    env:
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+  - id: linux-amd64
+    main: ./cmd/wapc
+    binary: wapc
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - CC=gcc
+      - CXX=g++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+  # - id: linux-armhf
+  #   main: ./cmd/wapc
+  #   binary: wapc
+  #   goos:
+  #     - linux
+  #   goarch:
+  #     - arm
+  #   goarm:
+  #     - 7
+  #   env:
+  #     - CC=arm-linux-gnueabihf-gcc
+  #     - CXX=arm-linux-gnueabihf-g++
+  #   flags:
+  #     - -mod=readonly
+  #   ldflags:
+  #     - -s -w -X main.version={{.Version}}
+archives:
+  - id: wapc
+    builds:
+      - darwin-amd64
+      #- darwin-arm64
+      - windows-amd64
+      - linux-amd64
+      #- linux-armhf
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    wrap_in_directory: true
+    files:
+        - README.md
+        - LICENSE.txt
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+brews:
+  - name: wapc
+    tap:
+      owner: wapc
+      name: tap
+    folder: Formula
+    homepage: https://github.com/wapc/cli
+    description: A simple description of your application.
+    license: "Apache-2.0"
+
+release:
+  github:
+    owner: wapc
+    name: cli
+  prerelease: auto
+  draft: false

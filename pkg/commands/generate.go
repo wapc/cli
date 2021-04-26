@@ -15,7 +15,7 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 	"gopkg.in/yaml.v3"
 
-	"github.com/wapc/cli-go/pkg/js"
+	"github.com/wapc/cli/pkg/js"
 )
 
 type Context struct{}

@@ -1,0 +1,32 @@
+name: Release Go project
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - main
+      - release-*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - run: git fetch --prune --unshallow
+      - name: setup dependencies
+        uses: actions/setup-go@v2
+      - name: release dry run
+        run: make release-dry-run
+      - name: release publish
+        if: startswith(github.ref, 'refs/tags/v')
+        run: |-
+          export GITHUB_TOKEN=${{secrets.GORELEASER_ACCESS_TOKEN}}
+          make release
