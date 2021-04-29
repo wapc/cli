@@ -1,6 +1,6 @@
 param (
     [string]$Version,
-    [string]$waPCRoot = "c:\wapc"
+    [string]$waPCRoot = "C:\waPC"
 )
 
 Write-Output ""
@@ -11,7 +11,8 @@ $waPCRoot = $waPCRoot -replace ' ', '` '
 
 # Constants
 $waPCCliFileName = "wapc.exe"
-$waPCCliFilePath = "${waPCRoot}\wapc_windows_amd64\${waPCCliFileName}"
+$waPCCliFilePath = "${waPCRoot}\${waPCCliFileName}"
+$waPCCliZipExtracted = "${waPCRoot}\wapc_windows_amd64"
 
 # GitHub Org and repo hosting waPC CLI
 $GitHubOrg = "wapc"
@@ -84,12 +85,12 @@ if (!(Test-Path $zipFilePath -PathType Leaf)) {
 # Extract waPC CLI to $waPCRoot
 Write-Output "Extracting $zipFilePath..."
 Microsoft.Powershell.Archive\Expand-Archive -Force -Path $zipFilePath -DestinationPath $waPCRoot
-if (!(Test-Path $waPCCliFilePath -PathType Leaf)) {
-    throw "Failed to download waPC Cli archieve - $zipFilePath"
+if (!(Test-Path $waPCCliZipExtracted -PathType Container)) {
+    throw "Failed to extract waPC Cli archieve - $waPCCliZipExtracted"
 }
 
-# Check the waPC CLI version
-Invoke-Expression "$waPCCliFilePath version"
+Copy-Item $waPCCliZipExtracted\${waPCCliFileName} -Destination $waPCRoot
+Remove-Item $waPCCliZipExtracted -Force -Recurse
 
 # Clean up zipfile
 Write-Output "Clean up $zipFilePath..."
@@ -107,4 +108,8 @@ else {
     Write-Output "Added $waPCRoot to User Path - $UserPathEnvironmentVar"
 }
 
+# Check the waPC CLI version
+Invoke-Expression "$waPCCliFilePath version"
+
 Write-Output "`r`nwaPC CLI is installed successfully."
+Write-Output "`r`nYou will need to start a new shell for the updated PATH."
