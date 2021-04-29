@@ -1,4 +1,4 @@
-module github.com/wapc/cli-go
+module github.com/wapc/cli
 
 go 1.16
 
