@@ -51,6 +51,12 @@ Linux
 wget -q https://raw.githubusercontent.com/wapc/cli/master/install/install.sh -O - | /bin/bash
 ```
 
+Homebrew
+
+```
+brew install wapc/tap/wapc
+```
+
 #### Create a waPC module
 
 AssemblyScript

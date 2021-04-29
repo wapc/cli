@@ -104,7 +104,7 @@ brews:
   - name: wapc
     tap:
       owner: wapc
-      name: tap
+      name: homebrew-tap
     folder: Formula
     homepage: https://github.com/wapc/cli
     description: A simple description of your application.
