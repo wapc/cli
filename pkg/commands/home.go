@@ -29,6 +29,19 @@ func getHomeDirectory() (string, error) {
 	return wapcHome, err
 }
 
+const tsconfigContents = `{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "esnext",
+    "baseUrl": ".",
+    "lib": [      
+      "esnext"
+    ],
+    "outDir": "../dist"
+  }
+}
+`
+
 func ensureHomeDirectory() (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
@@ -42,6 +55,7 @@ func ensureHomeDirectory() (string, error) {
 	wapcHome := filepath.Join(home, ".wapc")
 	srcDir := filepath.Join(wapcHome, "src")
 	templatesDir := filepath.Join(wapcHome, "templates")
+	definitionsDir := filepath.Join(wapcHome, "definitions")
 
 	if _, err := os.Stat(srcDir); os.IsNotExist(err) {
 		if err = os.MkdirAll(srcDir, 0700); err != nil {
@@ -49,8 +63,22 @@ func ensureHomeDirectory() (string, error) {
 		}
 	}
 
+	// Create tsconfig.json inside the src directory for editing inside an IDE.
+	tsconfigJSON := filepath.Join(srcDir, "tsconfig.json")
+	if _, err := os.Stat(tsconfigJSON); os.IsNotExist(err) {
+		if err = os.WriteFile(tsconfigJSON, []byte(tsconfigContents), 0644); err != nil {
+			return "", err
+		}
+	}
+
 	if _, err := os.Stat(templatesDir); os.IsNotExist(err) {
 		if err = os.MkdirAll(templatesDir, 0700); err != nil {
+			return "", err
+		}
+	}
+
+	if _, err := os.Stat(definitionsDir); os.IsNotExist(err) {
+		if err = os.MkdirAll(definitionsDir, 0700); err != nil {
 			return "", err
 		}
 	}

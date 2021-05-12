@@ -14,6 +14,7 @@ import (
 
 	"github.com/evanw/esbuild/pkg/api"
 	"gopkg.in/yaml.v3"
+	"rogchap.com/v8go"
 
 	"github.com/wapc/cli/pkg/js"
 )
@@ -28,8 +29,9 @@ type GenerateCmd struct {
 }
 
 type Config struct {
-	Schema    string            `json:"schema" yaml:"schema"`
-	Generates map[string]Target `json:"generates" yaml:"generates"`
+	Schema    string                 `json:"schema" yaml:"schema"`
+	Config    map[string]interface{} `json:"config,omitempty" yaml:"config,omitempty"`
+	Generates map[string]Target      `json:"generates" yaml:"generates"`
 }
 
 type Target struct {
@@ -43,15 +45,22 @@ const generateTemplate = `import { parse } from "@wapc/widl";
 import { Context, Writer } from "@wapc/widl/ast";
 import { {{visitorClass}} } from "{{module}}";
 
+function resolver(location, from) {
+  const source = resolverCallback(location, from);
+  if (source.startsWith("error: ")) {
+    throw source.substring(7);
+  }
+  return source;
+}
+
 export function generate(widl, config) {
-  const doc = parse(widl);
+  const doc = parse(widl, resolver);
   const context = new Context(config);
 
   const writer = new Writer();
   const visitor = new {{visitorClass}}(writer);
   doc.accept(context, visitor);
   let source = writer.string();
-  console.log(source);
 
   return source;
 }
@@ -109,6 +118,17 @@ func (c *GenerateCmd) generate(configYAML string) error {
 				continue
 			}
 		}
+
+		// Merge global config into target config
+		if target.Config == nil && config.Config != nil {
+			target.Config = make(map[string]interface{}, len(config.Config))
+		}
+		for k, v := range config.Config {
+			if _, exists := target.Config[k]; !exists {
+				target.Config[k] = v
+			}
+		}
+
 		fmt.Printf("Generating %s...\n", filename)
 		generateTS := generateTemplate
 		generateTS = strings.Replace(generateTS, "{{module}}", target.Module, 1)
@@ -133,7 +153,57 @@ func (c *GenerateCmd) generate(configYAML string) error {
 
 		bundle := string(result.OutputFiles[0].Contents)
 
-		j, err := js.Compile(bundle)
+		definitionsDir := filepath.Join(homeDir, "definitions")
+
+		resolverCallback := func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			iso, err := info.Context().Isolate()
+			if err != nil {
+				return nil
+			}
+
+			if len(info.Args()) < 1 {
+				value, _ := v8go.NewValue(iso, "error: resolve: invalid arguments")
+				return value
+			}
+
+			location := info.Args()[0].String()
+
+			loc := filepath.Join(definitionsDir, filepath.Join(strings.Split(location, "/")...))
+			if filepath.Ext(loc) != ".widl" {
+				widlLoc := loc + ".widl"
+				found := false
+				stat, err := os.Stat(widlLoc)
+				if err == nil {
+					found = !stat.IsDir()
+				}
+
+				if !found {
+					stat, err := os.Stat(loc)
+					if err != nil {
+						value, _ := v8go.NewValue(iso, fmt.Sprintf("error: %v", err))
+						return value
+					}
+					if stat.IsDir() {
+						loc = filepath.Join(loc, "index.widl")
+					} else {
+						loc += ".widl"
+					}
+				}
+			}
+
+			data, err := os.ReadFile(loc)
+			if err != nil {
+				value, _ := v8go.NewValue(iso, fmt.Sprintf("error: %v", err))
+				return value
+			}
+
+			value, _ := v8go.NewValue(iso, string(data))
+			return value
+		}
+
+		j, err := js.Compile(bundle, map[string]v8go.FunctionCallback{
+			"resolverCallback": resolverCallback,
+		})
 		if err != nil {
 			return err
 		}
@@ -144,6 +214,9 @@ func (c *GenerateCmd) generate(configYAML string) error {
 		}
 		res, err := j.Invoke("generate", schema, target.Config)
 		if err != nil {
+			if jserr, ok := err.(*v8go.JSError); ok {
+				jserr.Message = strings.TrimPrefix(jserr.Message, "Error: ")
+			}
 			return err
 		}
 

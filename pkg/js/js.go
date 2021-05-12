@@ -13,15 +13,50 @@ type JS struct {
 	ctx *v8go.Context
 }
 
-func Compile(source string) (*JS, error) {
+func Compile(source string, globals ...map[string]v8go.FunctionCallback) (*JS, error) {
 	iso, err := v8go.NewIsolate()
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := v8go.NewContext(iso)
+	global, err := v8go.NewObjectTemplate(iso)
 	if err != nil {
 		return nil, err
 	}
+	console, err := v8go.NewObjectTemplate(iso)
+	if err != nil {
+		return nil, err
+	}
+	log, err := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		args := make([]interface{}, len(info.Args()))
+		for i, a := range info.Args() {
+			args[i] = a
+		}
+		fmt.Println(args...)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	console.Set("log", log)
+	global.Set("println", log)
+	for _, g := range globals {
+		for name, callback := range g {
+			funcTemp, err := v8go.NewFunctionTemplate(iso, callback)
+			if err != nil {
+				return nil, err
+			}
+			global.Set(name, funcTemp)
+		}
+	}
+	ctx, err := v8go.NewContext(iso, global)
+	if err != nil {
+		return nil, err
+	}
+	consoleObject, err := console.NewInstance(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx.Global().Set("console", consoleObject)
 	_, err = ctx.RunScript(`var js_exports = {};`, "exports.js")
 	if err != nil {
 		return nil, err
