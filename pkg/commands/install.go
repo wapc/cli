@@ -29,6 +29,7 @@ type releaseInfo struct {
 	Org        string
 	Module     string
 	Tag        string
+	Directory  string
 	ZipURL     string
 	TarballURL string
 }
@@ -55,6 +56,19 @@ func (c *InstallCmd) doRun(ctx *Context, homeDir string) error {
 	}
 
 	fmt.Printf("Installing %s/%s %s...\n", release.Org, release.Module, release.Tag)
+
+	moduleSubDir := release.Module
+	if release.Org != "" {
+		moduleSubDir = filepath.Join(release.Org, release.Module)
+	}
+
+	if release.Directory != "" {
+		return c.installDir(
+			release.Directory,
+			homeDir,
+			moduleSubDir,
+		)
+	}
 
 	f, err := os.CreateTemp("", "install-*")
 	if err != nil {
@@ -118,15 +132,10 @@ func (c *InstallCmd) doRun(ctx *Context, homeDir string) error {
 			contentsDir := filepath.Join(downloadDir, entry.Name())
 			readPackage(contentsDir, release)
 
-			modulePart := release.Module
-			if release.Org != "" {
-				modulePart = filepath.Join(release.Org, release.Module)
-			}
-
 			if err = c.installDir(
 				contentsDir,
 				homeDir,
-				modulePart,
+				moduleSubDir,
 			); err != nil {
 				return err
 			}
@@ -137,11 +146,32 @@ func (c *InstallCmd) doRun(ctx *Context, homeDir string) error {
 }
 
 func (c *InstallCmd) getReleaseInfo(location, releaseTag string) (*releaseInfo, error) {
+	if strings.HasPrefix(location, "file:") {
+		return c.getReleaseInfoFromDirectory(location[5:], releaseTag)
+	}
 	if strings.HasPrefix(location, "github.com/") {
 		return c.getReleaseInfoFromGithub(location[11:], releaseTag)
 	}
 
 	return c.getReleaseInfoFromNPM(location, releaseTag)
+}
+
+func (c *InstallCmd) getReleaseInfoFromDirectory(location, releaseTag string) (*releaseInfo, error) {
+	dir := filepath.Clean(location)
+	fi, err := os.Stat(dir)
+	if err != nil {
+		return nil, err
+	}
+	if !fi.IsDir() {
+		return nil, fmt.Errorf("%s is not a directory", dir)
+	}
+	release := releaseInfo{
+		Directory: dir,
+	}
+	if err = readPackage(dir, &release); err != nil {
+		return nil, err
+	}
+	return &release, nil
 }
 
 func (c *InstallCmd) getReleaseInfoFromNPM(location, releaseTag string) (*releaseInfo, error) {
@@ -258,8 +288,9 @@ func (c *InstallCmd) getReleaseInfoFromGithub(location, releaseTag string) (*rel
 }
 
 var extensionDirectories = map[string]struct{}{
-	"src":       {},
-	"templates": {},
+	"src":         {},
+	"templates":   {},
+	"definitions": {},
 }
 
 func (c *InstallCmd) installDir(src string, dest string, modulePart string) error {
