@@ -173,8 +173,9 @@ func (c *GenerateCmd) generate(configYAML string) error {
 				widlLoc := loc + ".widl"
 				found := false
 				stat, err := os.Stat(widlLoc)
-				if err == nil {
-					found = !stat.IsDir()
+				if err == nil && !stat.IsDir() {
+					found = true
+					loc = widlLoc
 				}
 
 				if !found {
