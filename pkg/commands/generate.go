@@ -94,6 +94,12 @@ func (c *GenerateCmd) generate(configYAML string) error {
 	if err := yaml.Unmarshal([]byte(configYAML), &config); err != nil {
 		return err
 	}
+	if config.Schema == "" {
+		return errors.New("schema is required")
+	}
+	if len(config.Generates) == 0 {
+		return errors.New("generates is required")
+	}
 
 	schemaBytes, err := readFile(config.Schema)
 	if err != nil {
@@ -108,6 +114,12 @@ func (c *GenerateCmd) generate(configYAML string) error {
 	srcDir := filepath.Join(homeDir, "src")
 
 	for filename, target := range config.Generates {
+		if target.Module == "" {
+			return fmt.Errorf("module is required for %s", filename)
+		}
+		if target.VisitorClass == "" {
+			return fmt.Errorf("visitorClass is required for %s", filename)
+		}
 		if target.IfNotExists {
 			_, err := os.Stat(filename)
 			if err != nil && !os.IsNotExist(err) {

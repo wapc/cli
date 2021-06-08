@@ -34,6 +34,7 @@ type NewCmd struct {
 }
 
 var firstPartyTranslations = map[string]string{
+	"module":         filepath.Join("@wapc", "widl", "module"),
 	"assemblyscript": filepath.Join("@wapc", "widl-codegen", "assemblyscript"),
 	"rust":           filepath.Join("@wapc", "widl-codegen", "rust"),
 	"tinygo":         filepath.Join("@wapc", "widl-codegen", "tinygo"),

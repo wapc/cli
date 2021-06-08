@@ -57,12 +57,12 @@ func (c *InstallCmd) doRun(ctx *Context, homeDir string) error {
 
 	fmt.Printf("Installing %s/%s %s...\n", release.Org, release.Module, release.Tag)
 
-	moduleSubDir := release.Module
-	if release.Org != "" {
-		moduleSubDir = filepath.Join(release.Org, release.Module)
-	}
-
 	if release.Directory != "" {
+		moduleSubDir := release.Module
+		if release.Org != "" {
+			moduleSubDir = filepath.Join(release.Org, release.Module)
+		}
+
 		return c.installDir(
 			release.Directory,
 			homeDir,
@@ -130,7 +130,13 @@ func (c *InstallCmd) doRun(ctx *Context, homeDir string) error {
 	for _, entry := range dirEntries {
 		if entry.IsDir() {
 			contentsDir := filepath.Join(downloadDir, entry.Name())
-			readPackage(contentsDir, release)
+			if err = readPackage(contentsDir, release); err != nil {
+				return err
+			}
+			moduleSubDir := release.Module
+			if release.Org != "" {
+				moduleSubDir = filepath.Join(release.Org, release.Module)
+			}
 
 			if err = c.installDir(
 				contentsDir,
