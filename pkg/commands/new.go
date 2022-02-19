@@ -13,9 +13,10 @@ import (
 )
 
 type Template struct {
-	Name        string     `json:"name" yaml:"name"`
-	Description string     `json:"description" yaml:"description"`
-	Variables   []Variable `json:"variables" yaml:"variables"`
+	Name         string     `json:"name" yaml:"name"`
+	Description  string     `json:"description" yaml:"description"`
+	Variables    []Variable `json:"variables" yaml:"variables"`
+	SpecLocation string     `json:"specLocation" yaml:"specLocation"`
 }
 
 type Variable struct {
@@ -30,6 +31,7 @@ type Variable struct {
 type NewCmd struct {
 	Template  string            `arg:"" help:"The template for the project to create."`
 	Dir       string            `arg:"" help:"The project directory"`
+	Spec      string            `type:"existingfile" help:"An optional specification file to copy into the project"`
 	Variables map[string]string `arg:"" help:"Variables to pass to the template." optional:""`
 }
 
@@ -122,6 +124,21 @@ func (c *NewCmd) Run(ctx *Context) error {
 	err = c.copy(templatePath, projectPath)
 	if err != nil {
 		return err
+	}
+
+	if c.Spec != "" {
+		if template.SpecLocation == "" {
+			template.SpecLocation = "spec.widl"
+		}
+		specFilename := filepath.Join(projectPath, filepath.Clean(template.SpecLocation))
+		specBytes, err := os.ReadFile(c.Spec)
+		if err != nil {
+			return err
+		}
+		err = os.WriteFile(specFilename, specBytes, 0644)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
