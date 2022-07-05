@@ -59,7 +59,7 @@ brew install wapc/tap/wapc
 
 #### Create a waPC module
 
-###### Note for users not using the standard NPM Registry
+##### Note for users not using the standard NPM Registry
 
 Set an environment variable called `NPM_REG` to set the registry host for the cli
 ```
