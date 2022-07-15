@@ -194,7 +194,11 @@ func (c *InstallCmd) getReleaseInfoFromNPM(location, releaseTag string) (*releas
 		releaseTag = "latest"
 	}
 
-	npmURL := fmt.Sprintf("https://registry.npmjs.org/%s/%s/", location, releaseTag)
+        npmHost, present := os.LookupEnv("NPM_REG")
+        if !present {
+          npmHost = "https://registry.npmjs.org"
+        }
+	npmURL := fmt.Sprintf("%s/%s/%s/", npmHost, location, releaseTag)
 	resp, err := c.netClient.Get(npmURL)
 	if err != nil {
 		return nil, err

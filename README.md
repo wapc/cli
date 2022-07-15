@@ -87,6 +87,13 @@ make build
 
 The `build` directory will contain your `.wasm` file.
 
+##### Note for users not using the standard NPM Registry
+
+Set an environment variable called `NPM_REG` to set the registry host for the cli
+```
+NPM_REG="https://my.reg.com/npm" wapc new ...
+```
+
 ### Basic Scaffolding
 
 waPC cli has a very simple workflow:
